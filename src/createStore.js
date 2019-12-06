@@ -1,14 +1,17 @@
 import ActionTypes from './utils/actionTypes';
 import isPlainObject from './utils/isPlainObject';
 
+// 传入 reducer 函数、preloadedState 预置state 和 enhancer store的增强函数(增强是store的dispatch方法)
 export default function createStore(reducer, preloadedState, enhancer) {
+  // 如果有增强函数，那就直接返回调用 enhancer 的值
+  // 这里传的参数正好和 applyMiddleware.js 中相互对应
   if (typeof enhancer === 'function') {
     return enhancer(createStore)(reducer, preloadedState);
   }
 
   // 当前的 reducer 函数
   let currentReducer = reducer;
-  // 当前的 state ，也就是 store ，只是一个普通的对象而已
+  // 当前的 state ，也就是 store 的值，只是一个普通的对象而已
   let currentState = preloadedState;
   // 监听函数的数组集合，如果state发生改变，就要调用这里的监听函数
   let currentListeners = [];
@@ -25,7 +28,7 @@ export default function createStore(reducer, preloadedState, enhancer) {
     }
   }
 
-  // 很简单，就只是返回当前的 state
+  // 就是返回当前的 currentState
   function getState() {
     return currentState;
   }
@@ -85,10 +88,11 @@ export default function createStore(reducer, preloadedState, enhancer) {
 
   // 执行初始化
   dispatch({ type: ActionTypes.INIT });
+
   return {
     dispatch,
     subscribe,
     getState,
-    replaceReducer,
+    replaceReducer
   };
 }
