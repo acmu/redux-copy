@@ -87,7 +87,6 @@ export default function isPlainObject(obj) {
   // 所以需要判断原型链，设纯对象的原型是A，那么A的原型一定是 null
   let proto = obj;
   while (Object.getPrototypeOf(proto) !== null) {
-    console.log('proto', proto);
     proto = Object.getPrototypeOf(proto);
   }
 
@@ -189,36 +188,30 @@ console.log(thunk('MinYuan'));
 
 ### `createStore.js` 文件
 
-
 > 这里教大家一个 VSCode 快捷键，`cmd + k 和 cmd + n(数字)` 意思是以第 n 层级为准对代码进行折叠，比如 `cmd + k 和 cmd + 2` 是第二层级， `cmd + 3` 就是第三层级。折叠之后全部展开的快捷键是 `cmd + k 和 cmd + j`
 
 这是 Redux 中最主要的部分，虽然代码较长，但不用怕，折叠二层级后发现有用的，就这几个函数：
 
-![](https://user-gold-cdn.xitu.io/2019/11/18/16e7bb1b583254e9?w=972&h=1546&f=png&s=176012)
+![](https://user-gold-cdn.xitu.io/2019/12/6/16edb7d3139d3f59?w=504&h=782&f=png&s=77686)
+
+还有上面的一坨类型判断，这个留到最后再说。
 
 `createStore.js` 代码：
 
+zmy:todo 把 createStore 代码注释写得更加清晰
+
 ```js
-js;
+zmy:todo
 ```
 
-当实现了这个之后，我们就可以运行 redux 官方 Demo 代码了：
+当实现了 `createStore.js` 后，就可以运行[官方 Demo 代码](https://github.com/reduxjs/redux#the-gist)了，在 `demo` 目录中新建 `createStoreDemo.js`
+
+`createStoreDemo.js` 代码：
 
 ```js
-import { createStore } from 'redux';
+import createStore from '../src/createStore';
 
-/**
- * This is a reducer, a pure function with (state, action) => state signature.
- * It describes how an action transforms the state into the next state.
- *
- * The shape of the state is up to you: it can be a primitive, an array, an object,
- * or even an Immutable.js data structure. The only important part is that you should
- * not mutate the state object, but return a new object if the state changes.
- *
- * In this example, we use a `switch` statement and strings, but you can use a helper that
- * follows a different convention (such as function maps) if it makes sense for your
- * project.
- */
+// 这是 reducer ，一个纯函数
 function counter(state = 0, action) {
   switch (action.type) {
     case 'INCREMENT':
@@ -230,18 +223,14 @@ function counter(state = 0, action) {
   }
 }
 
-// Create a Redux store holding the state of your app.
-// Its API is { subscribe, dispatch, getState }.
+// 创建一个 redux state 储存你的App状态数据
+// 它的 API 是 { subscribe, dispatch, getState }
 let store = createStore(counter);
 
-// You can use subscribe() to update the UI in response to state changes.
-// Normally you'd use a view binding library (e.g. React Redux) rather than subscribe() directly.
-// However it can also be handy to persist the current state in the localStorage.
-
+// 你可以通过 subscribe 去订阅 state 的变化
 store.subscribe(() => console.log(store.getState()));
 
-// The only way to mutate the internal state is to dispatch an action.
-// The actions can be serialized, logged or stored and later replayed.
+// 改变内部 state 的唯一方式就是 dispatch 一个 action
 store.dispatch({ type: 'INCREMENT' });
 // 1
 store.dispatch({ type: 'INCREMENT' });
@@ -250,17 +239,21 @@ store.dispatch({ type: 'DECREMENT' });
 // 1
 ```
 
-你可以输出 `store` 看一下，它只是一个简单的对象，里面包含了几个方法。
+你还可以输出 `store` 看一下，它只是一个简单的对象，里面包含了几个方法。
 
 ![](https://user-gold-cdn.xitu.io/2019/12/5/16ed4a8459a3f281?w=958&h=200&f=png&s=51017)
 
-`store` 并没有把 `currentState` 暴露出来，而是通过 dispatch action 之后传给 reducer 去修改，返回一个全新的 `store` ，并且通过 `getState` 去获取内容。
+`store` 并没有把 `currentState` 暴露出来，而是通过 `dispatch` `action` 之后传给 `reducer` 去修改，返回一个全新的 `store` ，并且通过 `getState` 去获取 `currentState`。
 
-Redux 通过闭包的方式去隐藏 `currentState` 但我们还是有 2 种方式可以直接获取到 `currentState` 的值，分别是 `currentState = currentReducer(currentState, action);` 的 reducer 和 `return currentState;` 的 getState。也就是说，你可以通过这 2 种方式直接去改变 `currentState` ，而不需要 dispatch action ，也不会触发 listeners ，当然，这是正常开发下不想看到的效果，所以要保证每个 reducer 是纯函数、无副作用，最好是使用 [immutable.js](https://immutable-js.github.io/immutable-js/)，这样 store 中的数据天生就不可修改，很符合当前使用场景。
+显然，这里是通过闭包的方式去隐藏 `currentState` 的，但我们还是有两种方式可以直接获取到 `currentState` 的值：
 
-完成 `createStore` 后，就已经完成了 Redux 的大部分功能。
+1. `reducer` 中的第一个参数，即 `currentState = currentReducer(currentState, action);` 
+2. `getState` 的返回值，即 `return currentState;` 
+   
+也就是说，你可以通过以上两种方式直接去改变 `currentState` ，而不需要 `dispatch` `action` ，也不会触发 `listeners` ，当然，这是正常开发下不希望看到的效果，所以要保证每个 `reducer` 是纯函数、无副作用，最好是使用 [immutable.js](https://immutable-js.github.io/immutable-js/)，这样 store 中的数据天生就不可修改，很符合当前使用场景。
 
-### `combineReducers`
+
+### `combineReducers.js` 文件
 
 随着你的 App 变得复杂，store 也会变得很庞大，我们可以通过 `combineReducers` 组合 reducer 函数，简化 store。
 
@@ -290,7 +283,7 @@ rootReducer = combineReducers({potato: potatoReducer, tomato: tomatoReducer})
 
 虽然如今 Redux 已用 TS 重写，但核心代码基本没变，只是添加一些类型声明而已。
 
-
+我认为 Redux 也就2个难点，分别是 `createStore` 函数 和 中间件机制
 
 ## 记录
 

@@ -6,7 +6,6 @@ export default function isPlainObject(obj) {
   // 所以需要判断原型链，设纯对象的原型是A，那么A的原型一定是 null
   let proto = obj;
   while (Object.getPrototypeOf(proto) !== null) {
-    console.log('proto', proto);
     proto = Object.getPrototypeOf(proto);
   }
 
